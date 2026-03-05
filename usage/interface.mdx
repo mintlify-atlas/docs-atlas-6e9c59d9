@@ -1,0 +1,150 @@
+---
+title: 'Web Interface Overview'
+description: 'Learn about the web interface components and how to navigate the pseudorandom number generator application'
+---
+
+## Interface Structure
+
+The pseudorandom number generation application features a clean, form-based interface designed for educational purposes. All controls are centrally organized for easy access and clear workflow.
+
+### Main Components
+
+The interface consists of the following key elements:
+
+#### Algorithm Selection Dropdown
+
+At the top of the interface, you'll find the algorithm selector:
+
+```html
+<select id="algoritmo">
+  <option value="cuadrados_medios">Cuadrados Medios</option>
+  <option value="productos_medios">Productos Medios</option>
+</select>
+```
+
+<ParamField path="algoritmo" type="dropdown">
+  **Algorithm Selector** - Choose between two pseudorandom number generation algorithms:
+  - **Cuadrados Medios** (Middle Square Method): Uses a single seed value
+  - **Productos Medios** (Middle Product Method): Requires two seed values
+</ParamField>
+
+<Info>
+  The interface dynamically adapts based on your algorithm selection. When you select "Productos Medios", a second seed input field automatically appears.
+</Info>
+
+#### Input Form
+
+The main form (`simulacionForm`) contains all necessary parameters for generating pseudorandom numbers:
+
+<Accordion title="Cantidad de números a generar">
+  **Number Count Input** - Specifies how many pseudorandom numbers the algorithm should generate in the sequence.
+  
+  ```html
+  <input type="number" id="cantidadNumeros" name="cantidadNumeros" required>
+  ```
+  
+  This field is required and accepts any positive integer value.
+</Accordion>
+
+<Accordion title="Semilla 1 (Seed 1)">
+  **Primary Seed Value** - The initial seed value that starts the pseudorandom number generation process.
+  
+  ```html
+  <input type="number" id="semilla1" name="semilla1" required>
+  ```
+  
+  Required for both algorithms. See the [Parameters](/usage/parameters) page for valid ranges.
+</Accordion>
+
+<Accordion title="Semilla 2 (Seed 2)">
+  **Secondary Seed Value** - A second seed value used exclusively by the Productos Medios algorithm.
+  
+  ```html
+  <input type="number" id="semilla2" name="semilla2">
+  ```
+  
+  This field is conditionally displayed:
+  - **Hidden** when Cuadrados Medios is selected
+  - **Visible** when Productos Medios is selected
+  
+  <Tip>
+    The interface uses JavaScript to dynamically show/hide this field based on the selected algorithm (`index.js:5-11`).
+  </Tip>
+</Accordion>
+
+<Accordion title="Valor de D (D Parameter)">
+  **Digit Precision Parameter** - Determines the number of digits to extract from the middle of intermediate calculations.
+  
+  ```html
+  <input type="number" id="d" name="d" min="1" required>
+  ```
+  
+  This critical parameter affects the accuracy and range of generated numbers. Must be at least 1.
+</Accordion>
+
+#### Generate Button
+
+The **Generar** (Generate) button triggers the simulation:
+
+```html
+<button type="submit">Generar</button>
+```
+
+When clicked, it:
+1. Prevents default form submission (`index.js:14-17`)
+2. Validates all required fields
+3. Calls the appropriate algorithm function based on selection
+4. Displays results in the table area below
+
+<Tip>
+  All fields marked as `required` must be filled before the Generate button will function. The browser will automatically prompt you for missing values.
+</Tip>
+
+#### Results Display Area
+
+Below the form, a dedicated results area (`tablaResultados`) displays the generated pseudorandom numbers:
+
+```html
+<div id="tablaResultados"></div>
+```
+
+This area is initially empty and populates with a formatted table after clicking Generate. The results include:
+- A heading indicating which algorithm was used
+- A table with columns for `yi`, `xi`, and `ri` values
+- Each row representing one iteration of the algorithm
+
+For details on interpreting these results, see [Interpreting Results](/usage/interpreting-results).
+
+## Interface Workflow
+
+<Steps>
+  <Step title="Select Algorithm">
+    Choose either Cuadrados Medios or Productos Medios from the dropdown menu
+  </Step>
+  
+  <Step title="Configure Parameters">
+    Fill in all required fields:
+    - Cantidad de números (how many to generate)
+    - Semilla 1 (and Semilla 2 if using Productos Medios)
+    - Valor de D (digit precision)
+  </Step>
+  
+  <Step title="Generate Results">
+    Click the **Generar** button to execute the algorithm
+  </Step>
+  
+  <Step title="Review Output">
+    Examine the results table that appears below the form
+  </Step>
+</Steps>
+
+## Adaptive Behavior
+
+The interface intelligently adapts to your selections:
+
+| Algorithm Selected | Semilla 1 | Semilla 2 | Behavior |
+|-------------------|-----------|-----------|----------|
+| Cuadrados Medios  | Required  | Hidden    | Uses single seed squared |
+| Productos Medios  | Required  | Required  | Uses product of two seeds |
+
+This is implemented in `index.js:5-11` using an event listener on the algorithm dropdown that controls the visibility of the `semilla2Container`.

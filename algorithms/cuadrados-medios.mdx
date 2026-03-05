@@ -1,0 +1,188 @@
+---
+title: 'Middle Square Method (Cuadrados Medios)'
+description: 'Learn about the Middle Square Method for pseudorandom number generation'
+icon: 'square'
+---
+
+## Overview
+
+The **Middle Square Method** (Método de Cuadrados Medios) is one of the earliest methods for generating pseudorandom numbers, proposed by John von Neumann in 1946. Despite its historical significance and conceptual simplicity, it has several limitations that make it unsuitable for modern applications requiring high-quality random numbers.
+
+<Note>
+  This method is primarily used for educational purposes to understand the fundamentals of pseudorandom number generation.
+</Note>
+
+## How It Works
+
+The Middle Square Method generates a sequence of pseudorandom numbers through the following process:
+
+<Steps>
+  <Step title="Start with a seed">
+    Choose an initial D-digit number called the **seed** (x₀). This is your starting point.
+  </Step>
+  
+  <Step title="Square the number">
+    Calculate yᵢ = x²ᵢ₋₁ (square the previous number in the sequence).
+  </Step>
+  
+  <Step title="Extract the middle digits">
+    From the squared result, extract the middle D digits to form xᵢ.
+  </Step>
+  
+  <Step title="Normalize to [0,1)">
+    Calculate rᵢ = xᵢ / 10^D to get a pseudorandom number between 0 and 1.
+  </Step>
+  
+  <Step title="Repeat">
+    Use xᵢ as the seed for the next iteration.
+  </Step>
+</Steps>
+
+## Mathematical Formula
+
+The Middle Square Method can be expressed mathematically as:
+
+1. **Squaring step**: yᵢ = x²ᵢ₋₁
+2. **Middle extraction**: xᵢ = middle D digits of yᵢ
+3. **Normalization**: rᵢ = xᵢ / 10^D
+
+Where:
+- **D** = number of digits in the seed
+- **x₀** = initial seed value
+- **xᵢ** = the i-th D-digit number in the sequence
+- **yᵢ** = squared value
+- **rᵢ** = pseudorandom number in the interval [0, 1)
+
+## Implementation
+
+Here's the implementation from our simulator (index.js:48-74):
+
+```javascript
+function simularCuadradosMedios(cantidadNumeros, semilla, d) {
+    var resultadosDiv = document.getElementById('tablaResultados');
+
+    var resultados = '<h3>Resultados de Cuadrados Medios</h3>';
+    resultados += '<table>';
+    resultados += '<thead><tr><th>yi</th><th>xi</th><th>ri</th></tr></thead>';
+    resultados += '<tbody>';
+
+    var semillaActual = semilla;
+    for (var i = 0; i < cantidadNumeros; ++i) {
+        // Step 1: Square the current seed
+        var yi = semillaActual * semillaActual;
+        
+        // Step 2: Extract middle D digits
+        var yiStr = yi.toString();
+        var inicio = (yiStr.length - d) / 2;
+        var xi = parseInt(yiStr.substr(inicio, d));
+        
+        // Step 3: Normalize to [0,1)
+        var ri = xi / Math.pow(10, d);
+
+        resultados += '<tr><td>' + yi + '</td><td>' + xi.toString().padStart(d, '0') + '</td><td>' + ri.toFixed(d) + '</td></tr>';
+
+        // Step 4: Update seed for next iteration
+        semillaActual = xi;
+    }
+
+    resultados += '</tbody></table>';
+    resultadosDiv.innerHTML = resultados;
+}
+```
+
+## Example Calculation
+
+Let's walk through an example with a 4-digit seed (D = 4) and initial seed x₀ = 5735:
+
+<Accordion title="Iteration 1">
+  **Given**: x₀ = 5735
+  
+  1. **Square**: y₁ = 5735² = 32,890,225
+  2. **Extract middle 4 digits**: From "32890225" (8 digits), start at position (8-4)/2 = 2
+     - Extract digits at positions 2-5: **8902**
+  3. **Result**: x₁ = 8902
+  4. **Normalize**: r₁ = 8902 / 10⁴ = 0.8902
+</Accordion>
+
+<Accordion title="Iteration 2">
+  **Given**: x₁ = 8902
+  
+  1. **Square**: y₂ = 8902² = 79,245,604
+  2. **Extract middle 4 digits**: From "79245604" (8 digits), start at position 2
+     - Extract digits at positions 2-5: **2456**
+  3. **Result**: x₂ = 2456
+  4. **Normalize**: r₂ = 2456 / 10⁴ = 0.2456
+</Accordion>
+
+<Accordion title="Iteration 3">
+  **Given**: x₂ = 2456
+  
+  1. **Square**: y₃ = 2456² = 6,031,936
+  2. **Extract middle 4 digits**: From "6031936" (7 digits), start at position (7-4)/2 = 1.5 → 1
+     - Extract digits at positions 1-4: **0319**
+  3. **Result**: x₃ = 0319 = 319
+  4. **Normalize**: r₃ = 0319 / 10⁴ = 0.0319
+</Accordion>
+
+## Advantages and Disadvantages
+
+<Accordion title="Advantages">
+  - **Simple to understand**: The algorithm is conceptually straightforward
+  - **Easy to implement**: Requires only basic arithmetic operations
+  - **Historical significance**: One of the first PRNG methods, excellent for teaching
+  - **Fast computation**: Only involves squaring and digit extraction
+</Accordion>
+
+<Accordion title="Disadvantages">
+  - **Short period**: The sequence often repeats quickly or degenerates to zero
+  - **Seed sensitivity**: Poor choice of seed can lead to immediate degeneration
+  - **Zero trap**: If the sequence reaches 0000, all subsequent values will be zero
+  - **Poor statistical properties**: Fails many modern randomness tests
+  - **Not cryptographically secure**: Predictable and unsuitable for security applications
+</Accordion>
+
+<Warning>
+  The Middle Square Method can quickly degenerate into repeating cycles or reach zero. For example, seeds like 0100 or numbers with many zeros can cause the sequence to collapse. Always test your seed choice carefully!
+</Warning>
+
+## Common Pitfalls
+
+### 1. Zero Degeneration
+If the middle digits ever become 0000, the sequence will produce zeros forever:
+- x = 0000 → y = 0 → x = 0000 → ...
+
+### 2. Short Cycles
+Some seeds lead to very short repeating cycles:
+- Seed 0540 produces: 0540 → 2916 → 5030 → 3009 → 0540 (cycle of 4)
+
+### 3. Digit Count Issues
+When y² has fewer than 2D digits (which can happen with small seeds), the middle extraction can behave unexpectedly.
+
+## Using the Simulator
+
+To experiment with the Middle Square Method in this application:
+
+1. Select **"Cuadrados Medios"** from the algorithm dropdown
+2. Enter your seed value (x₀)
+3. Specify the number of digits (D)
+4. Set how many random numbers to generate
+5. Click **"Generar"** to see the results
+
+The simulator will display a table showing:
+- **yᵢ**: The squared value
+- **xᵢ**: The middle D digits extracted
+- **rᵢ**: The normalized pseudorandom number
+
+## Further Reading
+
+<Note>
+  While the Middle Square Method is historically important, modern applications should use more robust algorithms like the Linear Congruential Generator (LCG), Mersenne Twister, or cryptographically secure generators like Fortuna or ChaCha20.
+</Note>
+
+## Key Takeaways
+
+- The Middle Square Method is **simple but flawed**
+- It's excellent for **learning** but poor for **production use**
+- **Seed selection** is critical to avoid early degeneration
+- The method demonstrates the basic principle of **deterministic pseudorandom generation**
+- Understanding its limitations helps appreciate modern PRNG algorithms

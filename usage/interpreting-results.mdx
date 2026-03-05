@@ -1,0 +1,397 @@
+---
+title: 'Interpreting Results'
+description: 'Learn how to read and analyze the output from pseudorandom number generation algorithms'
+---
+
+## Understanding the Output Table
+
+After clicking the **Generar** button, the application displays results in a structured table format. Understanding each column and what it represents is crucial for analyzing the algorithm's behavior.
+
+### Table Structure
+
+The results table contains three columns:
+
+```html
+<table>
+  <thead>
+    <tr>
+      <th>yi</th>
+      <th>xi</th>
+      <th>ri</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Generated rows -->
+  </tbody>
+</table>
+```
+
+## Column Definitions
+
+### yi - Intermediate Product/Square
+
+<ParamField path="yi" type="number">
+  The intermediate calculation result before extracting the middle digits.
+</ParamField>
+
+**What it represents**:
+- **Cuadrados Medios**: The square of the previous seed (`yi = semillaActual * semillaActual`, `index.js:61`)
+- **Productos Medios**: The product of two seeds (`yi = semillaActual1 * semillaActual2`, `index.js:91`)
+
+**Characteristics**:
+- Always displayed as a complete integer
+- Can be very large (multiple digits)
+- The middle D digits of this number are extracted to form xi
+
+**Example**:
+```
+For Cuadrados Medios with seed 5735:
+yi = 5735 × 5735 = 32,890,225
+```
+
+<Accordion title="Why yi Matters for Analysis">
+  The yi value reveals important information about the algorithm:
+  
+  - **Pattern Detection**: Repeating yi values indicate the sequence is cycling
+  - **Magnitude**: If yi becomes too small, it may not have enough digits for proper middle extraction
+  - **Degeneration**: If yi becomes 0 or very small, the sequence has degenerated
+  
+  <Tip>
+    Watch for yi values that become progressively smaller - this indicates the sequence is approaching a degenerate state.
+  </Tip>
+</Accordion>
+
+---
+
+### xi - Extracted Middle Digits
+
+<ParamField path="xi" type="string">
+  The D-digit number extracted from the middle of yi. This becomes the seed for the next iteration.
+</ParamField>
+
+**What it represents**:
+The core pseudorandom value extracted using the middle-square or middle-product method.
+
+**Extraction Process**:
+```javascript
+var yiStr = yi.toString();
+var inicio = (yiStr.length - d) / 2;
+var xi = parseInt(yiStr.substr(inicio, d));
+```
+(`index.js:62-64` for Cuadrados Medios, `index.js:92-94` for Productos Medios)
+
+**Display Format**:
+```javascript
+xi.toString().padStart(d, '0')
+```
+(`index.js:67`, `index.js:97`)
+
+The `padStart(d, '0')` method ensures xi always displays with exactly D digits, padding with leading zeros if necessary.
+
+**Example** (with D=4):
+```
+yi = 32890225 (8 digits)
+Starting position: (8 - 4) / 2 = 2
+Extract 4 digits from position 2: "8902"
+xi = 8902
+
+Displayed as: "8902"
+```
+
+**Example with Leading Zeros**:
+```
+yi = 1234567 (7 digits), D=4
+Starting position: (7 - 4) / 2 = 1.5 → 1 (integer division)
+Extract 4 digits from position 1: "0234"
+xi = 234
+
+Displayed as: "0234" (padded to 4 digits)
+```
+
+<Info>
+  The `padStart` formatting is purely cosmetic for display purposes. It ensures all xi values align properly in the table and makes it easier to verify that exactly D digits were intended.
+</Info>
+
+**Role in Next Iteration**:
+- **Cuadrados Medios**: `xi` becomes the next `semillaActual` (`index.js:69`)
+- **Productos Medios**: `xi` becomes the new second seed, while the old second seed becomes the first seed (`index.js:99-100`)
+
+---
+
+### ri - Normalized Random Number
+
+<ParamField path="ri" type="number">
+  The normalized pseudorandom number between 0 and 1, ready for use in simulations or statistical analysis.
+</ParamField>
+
+**What it represents**:
+The final pseudorandom number, normalized to the range [0, 1) by dividing xi by 10^D.
+
+**Calculation**:
+```javascript
+var ri = xi / Math.pow(10, d);
+```
+(`index.js:65`, `index.js:95`)
+
+**Display Format**:
+```javascript
+ri.toFixed(d)
+```
+(`index.js:67`, `index.js:97`)
+
+The `toFixed(d)` method formats the number to display exactly D decimal places.
+
+**Example** (with D=4):
+```
+xi = 8902
+ri = 8902 / 10^4 = 8902 / 10000 = 0.8902
+
+Displayed as: "0.8902"
+```
+
+**Value Range**:
+- **Minimum**: 0.0000... (when xi = 0)
+- **Maximum**: 0.9999... (when xi = 10^D - 1)
+- **Never reaches**: 1.0 (the range is [0, 1), not [0, 1])
+
+<Accordion title="Why Normalize to [0, 1)?">
+  Normalizing to the range [0, 1) is standard practice in random number generation because:
+  
+  - **Universality**: Most programming libraries and statistical applications expect random numbers in this range
+  - **Easy Scaling**: You can scale to any range [a, b) using: `random_value = a + ri * (b - a)`
+  - **Statistical Analysis**: Standard statistical tests for randomness assume this range
+  - **Comparability**: Makes it easy to compare different random number generators
+</Accordion>
+
+<Info>
+  The ri column contains the actual "random" numbers you would use in simulations, Monte Carlo methods, or other applications requiring pseudorandom values.
+</Info>
+
+---
+
+## Understanding the Formatting Functions
+
+### padStart(d, '0')
+
+**Purpose**: Ensures xi displays with leading zeros when the extracted value has fewer than D digits.
+
+**Syntax**: `string.padStart(targetLength, padString)`
+
+**Examples**:
+```javascript
+// D = 4
+"8902".padStart(4, '0') → "8902" (no change needed)
+"234".padStart(4, '0')  → "0234" (one leading zero)
+"12".padStart(4, '0')   → "0012" (two leading zeros)
+"5".padStart(4, '0')    → "0005" (three leading zeros)
+```
+
+<Tip>
+  If you see many leading zeros in the xi column, it might indicate the yi values are becoming too small, which can lead to short cycles or sequence degeneration.
+</Tip>
+
+### toFixed(d)
+
+**Purpose**: Formats ri to display exactly D decimal places, making the precision explicit.
+
+**Syntax**: `number.toFixed(digits)`
+
+**Examples**:
+```javascript
+// D = 4
+(0.8902).toFixed(4)   → "0.8902"
+(0.1).toFixed(4)      → "0.1000"
+(0.999999).toFixed(4) → "1.0000" (rounds up!)
+(0.12345).toFixed(4)  → "0.1235" (rounds)
+```
+
+<Info>
+  Note that `toFixed` performs rounding. In rare cases where ri is calculated very close to 1.0 due to floating-point precision, it might display as "1.0000", even though the calculated value is technically less than 1.
+</Info>
+
+---
+
+## Validating Randomness Quality
+
+### Visual Inspection
+
+When examining the results table, look for these characteristics of good pseudorandom sequences:
+
+<Accordion title="✓ No Obvious Patterns">
+  **Good Sign**: ri values appear scattered without clear patterns
+  
+  ```
+  ri values: 0.8902, 0.2484, 0.1713, 0.9340, 0.2156, ...
+  ```
+  
+  **Bad Sign**: Clearly ascending or descending sequences
+  
+  ```
+  ri values: 0.1234, 0.2345, 0.3456, 0.4567, ...
+  ```
+</Accordion>
+
+<Accordion title="✓ No Early Repetition">
+  **Good Sign**: The sequence runs for many iterations before repeating
+  
+  **Bad Sign**: You see the same yi or xi values repeating within a few rows
+  
+  <Tip>
+    The maximum possible cycle length for a D-digit generator is 10^D. For D=4, that's 10,000 iterations maximum before the sequence must repeat.
+  </Tip>
+</Accordion>
+
+<Accordion title="✓ No Degeneration to Zero">
+  **Good Sign**: yi and xi maintain reasonable magnitudes throughout
+  
+  **Bad Sign**: yi values become progressively smaller, eventually reaching sequences like:
+  
+  ```
+  yi: 100, 10, 1, 0, 0, 0, ...
+  xi: 0001, 0000, 0000, 0000, ...
+  ri: 0.0001, 0.0000, 0.0000, 0.0000, ...
+  ```
+  
+  Once a sequence reaches zero, it cannot recover.
+</Accordion>
+
+<Accordion title="✓ Balanced Distribution">
+  **Good Sign**: ri values appear distributed across the [0, 1) range, not clustered
+  
+  - Some values near 0.1-0.3
+  - Some values near 0.4-0.6
+  - Some values near 0.7-0.9
+  
+  **Bad Sign**: Most values clustered in one region (e.g., all between 0.1-0.3)
+</Accordion>
+
+### Statistical Analysis Indicators
+
+For more rigorous validation, you can export the ri column values and test:
+
+- **Frequency Test**: Do all digits 0-9 appear with roughly equal frequency?
+- **Run Test**: Are runs of ascending/descending values appropriately random?
+- **Chi-Square Test**: Does the distribution match the expected uniform distribution?
+- **Autocorrelation**: Are consecutive values independent?
+
+<Info>
+  These algorithms (Cuadrados Medios and Productos Medios) are **educational tools** demonstrating early PRNG concepts. They are not cryptographically secure and may fail rigorous modern randomness tests. For production applications, use modern algorithms like Mersenne Twister or cryptographic PRNGs.
+</Info>
+
+---
+
+## Example Result Interpretation
+
+### Sample Output (Cuadrados Medios)
+
+```
+Algoritmo: Cuadrados Medios
+Semilla: 5735
+D: 4
+Cantidad: 5
+```
+
+| yi | xi | ri |
+|----|----|----- |
+| 32890225 | 8902 | 0.8902 |
+| 79245604 | 2456 | 0.2456 |
+| 6032536 | 0325 | 0.0325 |
+| 105625 | 0106 | 0.0106 |
+| 11236 | 0011 | 0.0011 |
+
+**Analysis**:
+
+1. **First Iteration**:
+   - yi = 5735² = 32,890,225
+   - Extract middle 4 digits from "32890225" → "8902"
+   - Normalize: 8902/10000 = 0.8902
+
+2. **Trend Observation**:
+   - yi values are decreasing rapidly
+   - xi values getting smaller (note the leading zeros)
+   - ri values trending toward zero
+
+3. **Conclusion**:
+   - This sequence is **degenerating**
+   - The seed 5735 with D=4 produces a short cycle
+   - Not a good choice for quality pseudorandom numbers
+
+<Tip>
+  Try different seeds to find longer, higher-quality sequences. Seeds that produce stable yi magnitudes tend to generate better pseudorandom sequences.
+</Tip>
+
+---
+
+## Common Issues and What They Mean
+
+### Issue: Rapid Convergence to Zero
+
+**Symptoms**: yi becomes progressively smaller, many leading zeros in xi, ri approaches 0.0000
+
+**Cause**: Poor seed choice or inappropriate D value
+
+**Solution**: Try a different seed or adjust D parameter
+
+### Issue: Short Cycle Length
+
+**Symptoms**: The same yi/xi values reappear after just a few iterations
+
+**Cause**: Inherent limitation of the algorithm with chosen parameters
+
+**Solution**: 
+- Increase D for potentially longer cycles
+- Try different seed values
+- Consider using Productos Medios instead of Cuadrados Medios
+
+### Issue: All Values in Narrow Range
+
+**Symptoms**: All ri values between, say, 0.1-0.3
+
+**Cause**: The extracted middle digits fall in a narrow numerical range
+
+**Solution**: Different seed selection or parameter adjustment
+
+<Info>
+  These issues demonstrate why modern applications use more sophisticated PRNGs. The educational value is in **understanding** why these problems occur and how algorithm design affects random number quality.
+</Info>
+
+---
+
+## Using Results in Applications
+
+The ri column provides normalized random numbers suitable for:
+
+### Scaling to Different Ranges
+
+```javascript
+// Scale ri from [0,1) to [min, max)
+function scaleRandom(ri, min, max) {
+  return min + ri * (max - min);
+}
+
+// Example: ri = 0.8902
+scaleRandom(0.8902, 0, 100)   // → 89.02 (range 0-100)
+scaleRandom(0.8902, 50, 150)  // → 139.02 (range 50-150)
+scaleRandom(0.8902, -10, 10)  // → 7.804 (range -10 to 10)
+```
+
+### Generating Random Integers
+
+```javascript
+// Generate random integer in range [min, max]
+function randomInt(ri, min, max) {
+  return Math.floor(min + ri * (max - min + 1));
+}
+
+// Example: ri = 0.8902
+randomInt(0.8902, 1, 6)    // → 6 (die roll)
+randomInt(0.8902, 0, 99)   // → 89 (lottery number)
+```
+
+### Monte Carlo Simulations
+
+Use the ri sequence for simple Monte Carlo experiments like estimating π, simulating coin flips, or modeling random walks.
+
+<Info>
+  Remember: For educational purposes only. Production applications should use modern, well-tested PRNG libraries.
+</Info>

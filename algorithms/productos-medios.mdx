@@ -1,0 +1,283 @@
+---
+title: 'Middle Product Method (Productos Medios)'
+description: 'Learn about the Middle Product Method for pseudorandom number generation'
+icon: 'xmark'
+---
+
+## Overview
+
+The **Middle Product Method** (Método de Productos Medios) is a variation of the Middle Square Method that attempts to address some of its limitations. Instead of squaring a single number, this method multiplies two different numbers and extracts the middle digits from the product.
+
+<Note>
+  The Middle Product Method typically has a longer period than the Middle Square Method, but still suffers from similar statistical weaknesses and is primarily used for educational purposes.
+</Note>
+
+## How It Works
+
+The Middle Product Method generates pseudorandom numbers through the following process:
+
+<Steps>
+  <Step title="Start with two seeds">
+    Choose two initial D-digit numbers called **seed 1** (x₀) and **seed 2** (x₁). This is a key difference from the Middle Square Method.
+  </Step>
+  
+  <Step title="Multiply the numbers">
+    Calculate yᵢ = xᵢ₋₂ × xᵢ₋₁ (multiply the two previous numbers in the sequence).
+  </Step>
+  
+  <Step title="Extract the middle digits">
+    From the product, extract the middle D digits to form xᵢ.
+  </Step>
+  
+  <Step title="Normalize to [0,1)">
+    Calculate rᵢ = xᵢ / 10^D to get a pseudorandom number between 0 and 1.
+  </Step>
+  
+  <Step title="Repeat">
+    Shift the seeds: the second seed becomes the first, and xᵢ becomes the new second seed.
+  </Step>
+</Steps>
+
+## Why Two Seeds?
+
+The Middle Product Method requires **two seeds** for several important reasons:
+
+<Accordion title="Breaking the degenerative pattern">
+  With only one seed, squaring can quickly lead to zero or short cycles. By maintaining two values and multiplying them, the method has more "mixing" and is less likely to immediately degenerate.
+</Accordion>
+
+<Accordion title="Increased period length">
+  Two seeds provide more initial state variation, potentially leading to longer sequences before repetition.
+</Accordion>
+
+<Accordion title="Better distribution">
+  The interaction between two different numbers generally produces better distributed results than repeatedly squaring the same value.
+</Accordion>
+
+<Accordion title="Fibonacci-like structure">
+  The algorithm follows a pattern similar to the Fibonacci sequence, where each new value depends on the two previous values, creating a more complex dependency structure.
+</Accordion>
+
+## Mathematical Formula
+
+The Middle Product Method can be expressed mathematically as:
+
+1. **Product step**: yᵢ = xᵢ₋₂ × xᵢ₋₁
+2. **Middle extraction**: xᵢ = middle D digits of yᵢ
+3. **Normalization**: rᵢ = xᵢ / 10^D
+4. **Seed update**: (xᵢ₋₂, xᵢ₋₁) → (xᵢ₋₁, xᵢ)
+
+Where:
+- **D** = number of digits in each seed
+- **x₀, x₁** = initial seed values
+- **xᵢ** = the i-th D-digit number in the sequence
+- **yᵢ** = product of the two previous values
+- **rᵢ** = pseudorandom number in the interval [0, 1)
+
+## Implementation
+
+Here's the implementation from our simulator (index.js:76-105):
+
+```javascript
+function simularProductosMedios(cantidadNumeros, semilla1, semilla2, d) {
+    var resultadosDiv = document.getElementById('tablaResultados');
+
+    var resultados = '<h3>Resultados de Productos Medios</h3>';
+    resultados += '<table>';
+    resultados += '<thead><tr><th>yi</th><th>xi</th><th>ri</th></tr></thead>';
+    resultados += '<tbody>';
+
+    var semillaActual1 = semilla1;
+    var semillaActual2 = semilla2;
+
+    for (var i = 0; i < cantidadNumeros; ++i) {
+        // Step 1: Multiply the two current seeds
+        var yi = semillaActual1 * semillaActual2;
+        
+        // Step 2: Extract middle D digits
+        var yiStr = yi.toString();
+        var inicio = (yiStr.length - d) / 2;
+        var xi = parseInt(yiStr.substr(inicio, d));
+        
+        // Step 3: Normalize to [0,1)
+        var ri = xi / Math.pow(10, d);
+
+        resultados += '<tr><td>' + yi + '</td><td>' + xi.toString().padStart(d, '0') + '</td><td>' + ri.toFixed(d) + '</td></tr>';
+
+        // Step 4: Shift seeds (Fibonacci-like update)
+        semillaActual1 = semillaActual2;
+        semillaActual2 = xi;
+    }
+
+    resultados += '</tbody></table>';
+    resultadosDiv.innerHTML = resultados;
+}
+```
+
+### Key Implementation Details
+
+<Note>
+  Notice the seed shifting mechanism at the end of each iteration: `semillaActual1 = semillaActual2; semillaActual2 = xi;` This creates a sliding window of two values, similar to how the Fibonacci sequence is calculated.
+</Note>
+
+## Example Calculation
+
+Let's walk through an example with 4-digit seeds (D = 4), seed₁ = 5015, and seed₂ = 5734:
+
+<Accordion title="Iteration 1">
+  **Given**: x₀ = 5015, x₁ = 5734
+  
+  1. **Multiply**: y₂ = 5015 × 5734 = 28,755,010
+  2. **Extract middle 4 digits**: From "28755010" (8 digits), start at position (8-4)/2 = 2
+     - Extract digits at positions 2-5: **7550**
+  3. **Result**: x₂ = 7550
+  4. **Normalize**: r₂ = 7550 / 10⁴ = 0.7550
+  5. **Update seeds**: x₀ ← 5734, x₁ ← 7550
+</Accordion>
+
+<Accordion title="Iteration 2">
+  **Given**: x₀ = 5734, x₁ = 7550
+  
+  1. **Multiply**: y₃ = 5734 × 7550 = 43,291,700
+  2. **Extract middle 4 digits**: From "43291700" (8 digits), start at position 2
+     - Extract digits at positions 2-5: **2917**
+  3. **Result**: x₃ = 2917
+  4. **Normalize**: r₃ = 2917 / 10⁴ = 0.2917
+  5. **Update seeds**: x₀ ← 7550, x₁ ← 2917
+</Accordion>
+
+<Accordion title="Iteration 3">
+  **Given**: x₀ = 7550, x₁ = 2917
+  
+  1. **Multiply**: y₄ = 7550 × 2917 = 22,023,350
+  2. **Extract middle 4 digits**: From "22023350" (8 digits), start at position 2
+     - Extract digits at positions 2-5: **0233**
+  3. **Result**: x₄ = 0233 = 233
+  4. **Normalize**: r₄ = 0233 / 10⁴ = 0.0233
+  5. **Update seeds**: x₀ ← 2917, x₁ ← 233
+</Accordion>
+
+## Comparison with Middle Square Method
+
+| Feature | Middle Square | Middle Product |
+|---------|--------------|----------------|
+| **Number of seeds** | 1 | 2 |
+| **Operation** | Squaring (x²) | Multiplication (x × y) |
+| **Period length** | Generally short | Generally longer |
+| **Zero degeneration** | High risk | Lower risk |
+| **Complexity** | Simpler | Slightly more complex |
+| **Memory requirement** | 1 value | 2 values |
+
+## Advantages and Disadvantages
+
+<Accordion title="Advantages">
+  - **Longer periods**: Generally produces longer sequences before cycling
+  - **Better mixing**: Two seeds provide more variation in the generated sequence
+  - **Less prone to zero**: Less likely to immediately degenerate to zero
+  - **Still simple**: Maintains conceptual simplicity while improving on Middle Square
+  - **Educational value**: Demonstrates how algorithmic variations can improve PRNG quality
+</Accordion>
+
+<Accordion title="Disadvantages">
+  - **Still has cycles**: Will eventually repeat, often sooner than desired
+  - **Seed selection critical**: Poor seed choices can still cause problems
+  - **Statistical weaknesses**: Fails modern randomness tests
+  - **Not cryptographically secure**: Predictable and unsuitable for security
+  - **Requires two seeds**: Slightly more complex initialization
+</Accordion>
+
+<Warning>
+  If either seed becomes 0000, or if both seeds become the same small value, the sequence can still degenerate. Always choose distinct, non-zero seeds with good digit variety!
+</Warning>
+
+## Common Pitfalls
+
+### 1. Identical Seeds
+Choosing the same value for both seeds (seed₁ = seed₂) reduces the method to the Middle Square Method:
+- If x₀ = x₁ = 5000, then y₂ = 5000 × 5000 = 25,000,000 (same as squaring)
+
+### 2. One Zero Seed
+If either seed is 0000, the first product will be zero:
+- x₀ = 0000, x₁ = 5432 → y₂ = 0 → x₂ = 0000
+- Then both seeds become 5432 and 0000, continuing the problem
+
+### 3. Low-Quality Seeds
+Seeds with many zeros or repetitive digits (like 0001, 1111, or 0100) can lead to rapid degeneration.
+
+### 4. Correlated Seeds
+Seeds that are multiples of each other may produce patterns in the output.
+
+## Best Practices for Seed Selection
+
+<Steps>
+  <Step title="Use distinct values">
+    Choose two different seeds that are not related by simple arithmetic relationships.
+  </Step>
+  
+  <Step title="Avoid zeros">
+    Ensure both seeds have minimal zeros and good digit variety.
+  </Step>
+  
+  <Step title="Use middle-range values">
+    For D-digit seeds, choose values in the middle of the range (avoid very small or very large values).
+  </Step>
+  
+  <Step title="Test the sequence">
+    Generate a sample sequence to check for immediate cycles or degeneration.
+  </Step>
+</Steps>
+
+## Using the Simulator
+
+To experiment with the Middle Product Method in this application:
+
+1. Select **"Productos Medios"** from the algorithm dropdown
+2. Enter your first seed value (x₀)
+3. Enter your second seed value (x₁) - the second input field will appear
+4. Specify the number of digits (D)
+5. Set how many random numbers to generate
+6. Click **"Generar"** to see the results
+
+The simulator will display a table showing:
+- **yᵢ**: The product of the two previous values
+- **xᵢ**: The middle D digits extracted
+- **rᵢ**: The normalized pseudorandom number
+
+<Note>
+  Watch how the sequence evolves! Try different seed combinations to see how they affect the period length and quality of the generated numbers.
+</Note>
+
+## Practical Example: Comparing Seed Quality
+
+### Good Seeds
+```
+Seed₁: 5734, Seed₂: 2916, D: 4
+First 5 values: 0.7550, 0.2917, 0.0233, 0.6794, 0.1584
+(Varied, no obvious pattern)
+```
+
+### Poor Seeds
+```
+Seed₁: 0100, Seed₂: 0200, D: 4
+First 5 values: 0.0200, 0.0040, 0.0000, 0.0000, 0.0000
+(Rapid degeneration to zero)
+```
+
+## Key Takeaways
+
+- The Middle Product Method **improves upon** the Middle Square Method but is still **not suitable for production**
+- **Two seeds are required** to create the multiplicative relationship
+- The Fibonacci-like structure (xᵢ depends on xᵢ₋₂ and xᵢ₋₁) provides **better mixing**
+- **Seed quality is crucial** - choose distinct, well-distributed values
+- Both methods demonstrate fundamental PRNG concepts but **modern algorithms are far superior**
+- Understanding these classical methods helps appreciate the **evolution of PRNG design**
+
+## Further Reading
+
+<Note>
+  For applications requiring quality random numbers, consider modern algorithms like:
+  - **Linear Congruential Generator (LCG)** - Better period and statistical properties
+  - **Mersenne Twister** - Industry standard for non-cryptographic use
+  - **Xorshift family** - Fast and simple with good statistical properties
+  - **ChaCha20 or AES-CTR** - Cryptographically secure options
+</Note>

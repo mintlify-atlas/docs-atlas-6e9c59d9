@@ -1,97 +1,160 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Simulación de Algoritmos Pseudoaleatorios"
+description: "Educational web application demonstrating pseudorandom number generation algorithms"
+mode: "custom"
 ---
 
-## Setting up
+<div className="relative overflow-hidden bg-gradient-to-br from-[#007bff] via-[#0056b3] to-[#004085] dark:from-[#004085] dark:via-[#0056b3] dark:to-[#007bff] py-20">
+  <div className="max-w-7xl mx-auto px-6 lg:px-8">
+    <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
+      <div className="lg:col-span-7">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+          Explore Pseudorandom Number Generation
+        </h1>
+        <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl">
+          Learn how classic algorithms like Middle Square and Middle Product methods generate pseudorandom sequences through interactive simulations and visualizations.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a
+            href="/quickstart"
+            className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 rounded-lg transition-colors"
+          >
+            Get Started
+          </a>
+          <a
+            href="/introduction"
+            className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white bg-transparent hover:bg-white/10 border border-white/30 rounded-lg transition-colors"
+          >
+            Learn More
+          </a>
+        </div>
+      </div>
+      <div className="hidden lg:block lg:col-span-5">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-2xl backdrop-blur-sm"></div>
+          <div className="relative p-8 text-white/90 font-mono text-sm">
+            <div className="mb-4">
+              <span className="text-white/60">// Middle Square Method</span>
+            </div>
+            <div className="mb-2">seed = <span className="text-white font-semibold">1234</span></div>
+            <div className="mb-2">yi = seed² = <span className="text-white font-semibold">1522756</span></div>
+            <div className="mb-2">xi = <span className="text-white font-semibold">5227</span></div>
+            <div>ri = <span className="text-white font-semibold">0.5227</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Quick Start
+    </h2>
+    <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+      Get started with pseudorandom number generation in three simple steps
+    </p>
+  </div>
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+  <Steps>
+    <Step title="Choose an Algorithm">
+      Select either the Middle Square Method (Cuadrados Medios) or Middle Product Method (Productos Medios) from the dropdown menu in the web interface.
+    </Step>
+    
+    <Step title="Configure Parameters">
+      Enter your seed value(s), the number of pseudorandom numbers to generate, and the digit precision (D parameter). For Middle Product, you'll need two seed values.
+      
+      ```javascript
+      // Example configuration
+      cantidadNumeros: 10
+      semilla1: 1234
+      d: 4  // 4-digit precision
+      ```
+    </Step>
+    
+    <Step title="Generate and Analyze">
+      Click **Generar** to run the simulation. View the results table showing yi (squared/product value), xi (extracted middle digits), and ri (normalized pseudorandom number between 0 and 1).
+    </Step>
+  </Steps>
+</div>
 
-## Make it yours
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Explore Algorithms
+    </h2>
+    <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+      Deep dive into the two classic pseudorandom number generation algorithms
+    </p>
+  </div>
 
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
-  </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
+  <CardGroup cols={2}>
     <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+      title="Cuadrados Medios"
+      icon="square"
+      href="/algorithms/cuadrados-medios"
+    >
+      Learn about the Middle Square Method invented by John von Neumann in 1946. Understand how it squares seed values and extracts middle digits.
+    </Card>
+    <Card
+      title="Productos Medios"
+      icon="xmark"
+      href="/algorithms/productos-medios"
+    >
+      Discover the Middle Product Method, which multiplies two seeds to generate pseudorandom sequences with improved statistical properties.
+    </Card>
+  </CardGroup>
+</div>
 
-## Create beautiful pages
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="text-center mb-12">
+    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Learn How to Use
+    </h2>
+    <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+      Master the web interface and understand the results
+    </p>
+  </div>
 
-Everything you need to create world-class documentation.
+  <CardGroup cols={3}>
+    <Card
+      title="Interface Guide"
+      icon="desktop"
+      href="/usage/interface"
+    >
+      Navigate the web application and understand each input field and control.
+    </Card>
+    <Card
+      title="Parameters"
+      icon="sliders"
+      href="/usage/parameters"
+    >
+      Learn how seed values and the D parameter affect pseudorandom sequence generation.
+    </Card>
+    <Card
+      title="Interpreting Results"
+      icon="chart-line"
+      href="/usage/interpreting-results"
+    >
+      Understand the output table with yi, xi, and ri values and what they represent.
+    </Card>
+  </CardGroup>
+</div>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="rounded-2xl bg-gradient-to-r from-[#007bff]/10 to-[#004085]/10 dark:from-[#004085]/20 dark:to-[#007bff]/20 border border-[#007bff]/20 dark:border-[#007bff]/30 p-8 sm:p-12 text-center">
+    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+      Ready to explore pseudorandom algorithms?
+    </h2>
+    <p className="text-base text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
+      Start simulating pseudorandom number sequences and understand the mathematical foundations behind these classic algorithms.
+    </p>
+    <a
+      href="/quickstart"
+      className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white bg-[#007bff] hover:bg-[#0056b3] dark:bg-[#0056b3] dark:hover:bg-[#007bff] rounded-lg transition-colors"
+    >
+      Get Started Now
+    </a>
+  </div>
+</div>

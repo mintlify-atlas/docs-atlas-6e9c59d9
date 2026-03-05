@@ -1,0 +1,234 @@
+---
+title: 'Input Parameters'
+description: 'Detailed explanation of all input parameters for pseudorandom number generation algorithms'
+---
+
+## Overview
+
+The pseudorandom number generation algorithms require specific input parameters to function correctly. Understanding each parameter's purpose, valid ranges, and impact on output is essential for effective use of this educational tool.
+
+## Parameter Reference
+
+### Cantidad de números (Number Count)
+
+<ParamField path="cantidadNumeros" type="number" required>
+  The total quantity of pseudorandom numbers to generate in the sequence.
+</ParamField>
+
+**Purpose**: Determines the length of the pseudorandom number sequence.
+
+**Valid Range**: Any positive integer (1, 2, 3, ...)
+
+**Implementation Details**:
+- Retrieved from the form as: `document.getElementById('cantidadNumeros').value` (`index.js:30`)
+- Used as loop counter in both algorithms (`index.js:60`, `index.js:90`)
+- The algorithm iterates this many times to generate the sequence
+
+<Tip>
+  Start with smaller values (10-20) when learning to easily observe patterns and verify calculations manually.
+</Tip>
+
+**Example Values**:
+- `10` - Generate 10 numbers (good for learning and verification)
+- `100` - Generate 100 numbers (useful for statistical analysis)
+- `1000` - Generate 1000 numbers (for comprehensive randomness testing)
+
+---
+
+### Semilla 1 (Seed 1)
+
+<ParamField path="semilla1" type="number" required>
+  The primary seed value that initializes the pseudorandom number generation process.
+</ParamField>
+
+**Purpose**: Provides the starting point for the algorithm. The same seed will always produce the same sequence of numbers (deterministic behavior).
+
+**Valid Range**: Depends on the algorithm and D parameter, but generally:
+- Should be a positive integer
+- Should have a number of digits related to D for best results
+- Typically between `10^(d-1)` and `10^d - 1` for optimal results
+
+**Implementation Details**:
+- Parsed as integer: `parseInt(semilla1Element.value)` (`index.js:31`)
+- For **Cuadrados Medios**: Used as `semillaActual` and squared (`index.js:59-61`)
+- For **Productos Medios**: Multiplied with Semilla 2 (`index.js:87-91`)
+
+<Accordion title="Why Seed Values Matter">
+  Seeds are fundamental to pseudorandom number generators:
+  
+  - **Reproducibility**: The same seed always produces the same sequence, allowing you to recreate results
+  - **Determinism**: Despite appearing random, the sequence is completely determined by the seed
+  - **Testing**: You can verify algorithm correctness by comparing sequences from known seeds
+  
+  Poor seed selection can lead to:
+  - Short cycles (sequence repeats too quickly)
+  - Degenerate cases (sequence becomes all zeros)
+  - Predictable patterns
+</Accordion>
+
+**Example Values** (for D=4):
+- `5735` - A 4-digit seed for d=4
+- `1234` - Simple seed for testing
+- `9876` - Another 4-digit seed
+
+<Info>
+  The seed should ideally have D digits to work optimally with the middle extraction process. Seeds with fewer digits may still work but might produce shorter cycles.
+</Info>
+
+---
+
+### Semilla 2 (Seed 2)
+
+<ParamField path="semilla2" type="number">
+  The secondary seed value used exclusively by the Productos Medios (Middle Product Method) algorithm.
+</ParamField>
+
+**Purpose**: Provides a second initial value to multiply with Semilla 1, creating more complex initial conditions.
+
+**Valid Range**: Same considerations as Semilla 1
+- Positive integer
+- Ideally D digits in length
+- Should be different from Semilla 1 for better results
+
+**Implementation Details**:
+- Only visible when "productos_medios" algorithm is selected (`index.js:6-10`)
+- Parsed as integer: `parseInt(semilla2Element.value)` (`index.js:32`)
+- Multiplied with Semilla 1: `yi = semillaActual1 * semillaActual2` (`index.js:91`)
+- After each iteration, seeds shift: the old Semilla 2 becomes the new Semilla 1, and the new xi becomes Semilla 2 (`index.js:99-100`)
+
+<Tip>
+  For Productos Medios, choose two seeds that are relatively prime (share no common factors other than 1) to maximize cycle length.
+</Tip>
+
+**Algorithm-Specific Visibility**:
+
+| Algorithm | Semilla 2 Required? |
+|-----------|--------------------|
+| Cuadrados Medios | No (field hidden) |
+| Productos Medios | Yes (field visible) |
+
+---
+
+### D (Digit Precision Parameter)
+
+<ParamField path="d" type="number" required>
+  The number of digits to extract from the middle of intermediate calculations. This parameter critically affects the precision and range of generated random numbers.
+</ParamField>
+
+**Purpose**: Determines:
+1. How many middle digits to extract from yi
+2. The range of possible ri values (0 to 1 with D decimal places)
+3. The precision of the output numbers
+
+**Valid Range**: 
+- Minimum: `1` (enforced by HTML attribute `min="1"`)
+- Maximum: Limited by practical considerations and seed size
+- Typical values: 2-6 for educational purposes
+
+**Implementation Details**:
+- Parsed as integer: `parseInt(document.getElementById('d').value)` (`index.js:34`)
+- Used in middle extraction calculation: `var inicio = (yiStr.length - d) / 2` (`index.js:63`, `index.js:93`)
+- Determines substring length: `yiStr.substr(inicio, d)` (`index.js:64`, `index.js:94`)
+- Affects normalization: `ri = xi / Math.pow(10, d)` (`index.js:65`, `index.js:95`)
+- Controls display formatting: `padStart(d, '0')` and `toFixed(d)` (`index.js:67`, `index.js:97`)
+
+<Accordion title="How D Affects Output">
+  The D parameter has multiple impacts on the generated sequence:
+  
+  **Middle Extraction**:
+  ```javascript
+  var inicio = (yiStr.length - d) / 2;
+  var xi = parseInt(yiStr.substr(inicio, d));
+  ```
+  
+  For example, if yi = 32895225 (8 digits) and d = 4:
+  - inicio = (8 - 4) / 2 = 2
+  - Extract 4 digits starting at position 2: "8952"
+  - xi = 8952
+  
+  **Normalization**:
+  ```javascript
+  var ri = xi / Math.pow(10, d);
+  ```
+  
+  Continuing the example with d = 4:
+  - ri = 8952 / 10000 = 0.8952
+  
+  This ensures ri is always between 0 and 1.
+  
+  **Display Precision**:
+  - `xi.toString().padStart(d, '0')`: Ensures xi displays with leading zeros if needed ("0123" instead of "123")
+  - `ri.toFixed(d)`: Displays ri with exactly D decimal places ("0.8952" for d=4)
+</Accordion>
+
+<Info>
+  **Choosing the Right D Value**:
+  
+  - **Smaller D (2-3)**: Faster cycles, easier to verify manually, less precision
+  - **Larger D (4-6)**: Longer cycles, more precision, better statistical properties
+  - **Too Large**: May cause extraction errors if yi doesn't have enough digits
+</Info>
+
+**Example Impact**:
+
+| D Value | Max xi | ri Range | Decimal Precision |
+|---------|--------|----------|-------------------|
+| 2 | 99 | 0.00 - 0.99 | 2 decimal places |
+| 3 | 999 | 0.000 - 0.999 | 3 decimal places |
+| 4 | 9999 | 0.0000 - 0.9999 | 4 decimal places |
+| 5 | 99999 | 0.00000 - 0.99999 | 5 decimal places |
+
+---
+
+## Parameter Validation
+
+The application performs validation at multiple levels:
+
+### HTML5 Validation
+- `required` attribute ensures fields are not empty
+- `type="number"` restricts input to numeric values
+- `min="1"` on D parameter enforces minimum value
+
+### JavaScript Validation
+```javascript
+if (!cantidadNumerosElement || !semilla1Element || !algoritmoElement) {
+    console.error('No se encontraron todos los elementos necesarios');
+    return;
+}
+```
+
+The code checks for element existence before processing (`index.js:25-28`).
+
+<Tip>
+  The browser will prevent form submission if any required field is empty or invalid. You'll see built-in validation messages prompting you to correct the input.
+</Tip>
+
+## Recommended Parameter Combinations
+
+### For Learning (Cuadrados Medios)
+```
+Algoritmo: Cuadrados Medios
+Cantidad de números: 10
+Semilla 1: 5735
+D: 4
+```
+
+### For Learning (Productos Medios)
+```
+Algoritmo: Productos Medios
+Cantidad de números: 10
+Semilla 1: 1234
+Semilla 2: 5678
+D: 4
+```
+
+### For Statistical Testing
+```
+Cantidad de números: 1000
+Semilla 1: 5327 (or two seeds for Productos Medios)
+D: 5
+```
+
+<Info>
+  Experiment with different parameter combinations to observe how they affect the generated sequence, cycle length, and randomness quality.
+</Info>

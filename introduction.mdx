@@ -1,0 +1,87 @@
+---
+title: Introduction
+description: Learn about pseudorandom number generation algorithms with this interactive educational tool
+---
+
+## What is This Application?
+
+The Pseudorandom Number Generation Simulator is an educational web application designed to help students and developers understand classical pseudorandom number generation algorithms through interactive visualization.
+
+This tool provides hands-on experience with two fundamental algorithms:
+- **Cuadrados Medios (Middle Squares Method)** - Developed by John von Neumann in 1946
+- **Productos Medios (Middle Products Method)** - A variation that uses two seeds
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Interactive Algorithm Selection" icon="toggle-on">
+    Switch between different pseudorandom algorithms and see how they behave with various inputs
+  </Card>
+  <Card title="Real-time Generation" icon="chart-line">
+    Generate sequences of pseudorandom numbers instantly and view detailed step-by-step calculations
+  </Card>
+  <Card title="Customizable Parameters" icon="sliders">
+    Control the number of values generated, seed values, and digit precision (D parameter)
+  </Card>
+  <Card title="Visual Results Table" icon="table">
+    View comprehensive results showing yi, xi, and ri values for each iteration
+  </Card>
+</CardGroup>
+
+## How It Works
+
+The application implements classical pseudorandom number generation algorithms that work by:
+
+1. **Taking a seed value** - An initial number to start the sequence
+2. **Applying mathematical operations** - Squaring (for Cuadrados Medios) or multiplying (for Productos Medios)
+3. **Extracting middle digits** - Taking the central D digits from the result
+4. **Normalizing to [0,1)** - Dividing by 10^D to get a pseudorandom number between 0 and 1
+
+<Note>
+These are **deterministic** algorithms - the same seed will always produce the same sequence. This makes them ideal for educational purposes and understanding how pseudorandom generation works.
+</Note>
+
+## Who Is This For?
+
+This application is perfect for:
+
+- **Students** learning about simulation, statistics, or computer science fundamentals
+- **Educators** teaching random number generation and Monte Carlo methods
+- **Developers** wanting to understand classical PRNG algorithms
+- **Anyone curious** about how computers generate "random" numbers
+
+## Understanding the Algorithms
+
+### Cuadrados Medios (Middle Squares)
+
+The Middle Squares method generates pseudorandom numbers by:
+- Squaring the current seed value
+- Extracting the middle D digits
+- Using those digits as both the next seed and to generate the normalized random number
+
+### Productos Medios (Middle Products)
+
+The Middle Products method is similar but uses:
+- Two seed values instead of one
+- Multiplication of the two seeds instead of squaring
+- A rotation scheme where the second seed becomes the first, and the extracted middle digits become the new second seed
+
+<Warning>
+These classical algorithms have known limitations in terms of period length and statistical quality. Modern applications should use cryptographically secure random number generators. These implementations are for **educational purposes only**.
+</Warning>
+
+## What You'll Learn
+
+By using this simulator, you'll gain understanding of:
+
+- How pseudorandom number generators work internally
+- The concept of seeds and reproducibility
+- Period length and degeneracy in simple PRNGs
+- The mathematical foundations of random number generation
+- Why modern systems use more sophisticated algorithms
+
+## Next Steps
+
+<Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+  Jump right in with our step-by-step guide to generating your first pseudorandom sequence
+</Card>

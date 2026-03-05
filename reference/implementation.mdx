@@ -1,0 +1,837 @@
+---
+title: 'Implementation Reference'
+description: 'Complete technical documentation of the JavaScript PRNG implementation'
+---
+
+## Overview
+
+This reference documents the JavaScript implementation of the Middle Square and Middle Product pseudorandom number generation algorithms. The implementation consists of three core functions that handle DOM interaction, algorithm selection, and HTML table generation.
+
+## Core Functions
+
+### generarSimulacion()
+
+The main controller function that handles form submission, extracts user inputs, and delegates to the appropriate PRNG algorithm.
+
+<ParamField path="No parameters" type="void">
+  This function reads values directly from DOM elements rather than accepting parameters.
+</ParamField>
+
+<ResponseField name="Return Value" type="void">
+  The function doesn't return a value; it directly manipulates the DOM to display results.
+</ResponseField>
+
+#### Source Code
+
+```javascript index.js
+function generarSimulacion() {
+    var cantidadNumerosElement = document.getElementById('cantidadNumeros');
+    var semilla1Element = document.getElementById('semilla1');
+    var semilla2Element = document.getElementById('semilla2');
+    var algoritmoElement = document.getElementById('algoritmo');
+
+    if (!cantidadNumerosElement || !semilla1Element || !algoritmoElement) {
+        console.error('No se encontraron todos los elementos necesarios');
+        return;
+    }
+
+    var cantidadNumeros = cantidadNumerosElement.value;
+    var semilla1 = parseInt(semilla1Element.value);
+    var semilla2 = parseInt(semilla2Element.value);
+    var algoritmo = algoritmoElement.value;
+    var d = parseInt(document.getElementById('d').value);
+    var resultadosDiv = document.getElementById('tablaResultados');
+    resultadosDiv.innerHTML = '';
+
+    if (algoritmo === 'cuadrados_medios') {
+        simularCuadradosMedios(cantidadNumeros, semilla1, d);
+    } else if (algoritmo === 'productos_medios') {
+        simularProductosMedios(cantidadNumeros, semilla1, semilla2, d);
+    }
+}
+```
+
+#### Implementation Details
+
+<AccordionGroup>
+
+<Accordion title="DOM Element Retrieval">
+
+The function retrieves five DOM elements:
+
+1. **`cantidadNumeros`**: Input field for how many random numbers to generate
+2. **`semilla1`**: Primary seed input (required for both algorithms)
+3. **`semilla2`**: Secondary seed input (only for Middle Product method)
+4. **`algoritmo`**: Select dropdown for algorithm choice
+5. **`d`**: Number of digits for the PRNG
+
+**Error Handling:**
+- Validates that critical elements exist before proceeding
+- Logs error to console if elements are missing
+- Early return prevents execution with invalid state
+
+</Accordion>
+
+<Accordion title="Input Processing">
+
+**Type conversions performed:**
+
+```javascript
+var cantidadNumeros = cantidadNumerosElement.value;  // String (not converted)
+var semilla1 = parseInt(semilla1Element.value);       // String → Integer
+var semilla2 = parseInt(semilla2Element.value);       // String → Integer
+var d = parseInt(document.getElementById('d').value); // String → Integer
+```
+
+<Warning>
+`cantidadNumeros` is not parsed to integer, which may cause issues if used in arithmetic operations. It's only used as a loop bound where JavaScript performs implicit conversion.
+</Warning>
+
+</Accordion>
+
+<Accordion title="Algorithm Dispatch">
+
+The function uses string comparison to route to the appropriate algorithm:
+
+- `'cuadrados_medios'` → `simularCuadradosMedios(cantidadNumeros, semilla1, d)`
+- `'productos_medios'` → `simularProductosMedios(cantidadNumeros, semilla1, semilla2, d)`
+
+**No default case:** If an unrecognized algorithm value is provided, the function silently does nothing.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+### simularCuadradosMedios()
+
+Implements the Middle Square method for pseudorandom number generation.
+
+<ParamField path="cantidadNumeros" type="number | string">
+  The number of pseudorandom values to generate. Can be string (will be coerced in loop).
+</ParamField>
+
+<ParamField path="semilla" type="number">
+  The initial seed value with `d` digits. Must be a non-negative integer.
+</ParamField>
+
+<ParamField path="d" type="number">
+  The number of digits to use for seeds and extracted values.
+</ParamField>
+
+<ResponseField name="Return Value" type="void">
+  Results are rendered directly into the DOM element with ID `tablaResultados`.
+</ResponseField>
+
+#### Function Signature
+
+```javascript
+function simularCuadradosMedios(cantidadNumeros, semilla, d)
+```
+
+#### Complete Implementation
+
+<CodeGroup>
+
+```javascript index.js (Lines 48-74)
+function simularCuadradosMedios(cantidadNumeros, semilla, d) {
+    var resultadosDiv = document.getElementById('tablaResultados');
+
+    var resultados = '<h3>Resultados de Cuadrados Medios</h3>';
+    resultados += '<table>';
+    resultados += '<thead><tr><th>yi</th><th>xi</th><th>ri</th></tr></thead>';
+    resultados += '<tbody>';
+
+    var semillaActual = semilla;
+    for (var i = 0; i < cantidadNumeros; ++i) {
+        var yi = semillaActual * semillaActual;
+        var yiStr = yi.toString();
+        var inicio = (yiStr.length - d) / 2;
+        var xi = parseInt(yiStr.substr(inicio, d));
+        var ri = xi / Math.pow(10, d);
+
+        resultados += '<tr><td>' + yi + '</td><td>' + xi.toString().padStart(d, '0') + '</td><td>' + ri.toFixed(d) + '</td></tr>';
+
+        semillaActual = xi;
+    }
+
+    resultados += '</tbody></table>';
+    resultadosDiv.innerHTML = resultados;
+}
+```
+
+```javascript Algorithm Breakdown
+// Step 1: Square the current seed
+var yi = semillaActual * semillaActual;
+
+// Step 2: Convert to string for digit extraction
+var yiStr = yi.toString();
+
+// Step 3: Calculate starting position for middle extraction
+var inicio = (yiStr.length - d) / 2;
+
+// Step 4: Extract d middle digits
+var xi = parseInt(yiStr.substr(inicio, d));
+
+// Step 5: Normalize to [0, 1) range
+var ri = xi / Math.pow(10, d);
+
+// Step 6: Update seed for next iteration
+semillaActual = xi;
+```
+
+</CodeGroup>
+
+#### Algorithm Steps
+
+<Steps>
+
+<Step title="Square the Seed">
+
+```javascript
+var yi = semillaActual * semillaActual;
+```
+
+Multiplies the current seed by itself. For a $d$-digit number, this produces a value with up to $2d$ digits.
+
+**Example:** For `semillaActual = 5772` (4 digits):
+```
+yi = 5772 × 5772 = 33,315,984 (8 digits)
+```
+
+</Step>
+
+<Step title="Convert to String">
+
+```javascript
+var yiStr = yi.toString();
+```
+
+Converts the squared value to a string for character-based manipulation.
+
+<Note>
+This approach uses string manipulation rather than mathematical operations for digit extraction, which is simpler but less performant for large-scale generation.
+</Note>
+
+</Step>
+
+<Step title="Calculate Middle Position">
+
+```javascript
+var inicio = (yiStr.length - d) / 2;
+```
+
+Computes the starting index for extracting the middle $d$ digits.
+
+**Formula:** $\text{inicio} = \frac{L - d}{2}$ where $L$ is the length of $y_i$
+
+**Example:** For `yiStr = "33315984"` (length 8) and `d = 4`:
+```
+inicio = (8 - 4) / 2 = 2
+```
+
+<Warning>
+If $y_i$ has fewer than $d$ digits (can occur with small seeds), this calculation may produce a negative index or incorrect extraction. The implementation doesn't handle this edge case.
+</Warning>
+
+</Step>
+
+<Step title="Extract Middle Digits">
+
+```javascript
+var xi = parseInt(yiStr.substr(inicio, d));
+```
+
+Uses `substr()` to extract $d$ characters starting at position `inicio`, then converts back to integer.
+
+<Warning>
+**Deprecated Method:** `substr()` is deprecated in favor of `substring()` or `slice()`. Modern implementations should use:
+
+```javascript
+var xi = parseInt(yiStr.slice(inicio, inicio + d));
+```
+</Warning>
+
+**Example:** From `yiStr = "33315984"` starting at index 2:
+```
+yiStr.substr(2, 4) = "3159"
+xi = 3159
+```
+
+</Step>
+
+<Step title="Normalize to [0, 1)">
+
+```javascript
+var ri = xi / Math.pow(10, d);
+```
+
+Divides the extracted value by $10^d$ to produce a pseudorandom number in the range $[0, 1)$.
+
+**Example:** For `xi = 3159` and `d = 4`:
+```
+ri = 3159 / 10000 = 0.3159
+```
+
+</Step>
+
+<Step title="Update State">
+
+```javascript
+semillaActual = xi;
+```
+
+The extracted middle value becomes the seed for the next iteration, creating the iterative chain.
+
+</Step>
+
+</Steps>
+
+#### String Manipulation Methods
+
+<AccordionGroup>
+
+<Accordion title="substr() - Substring Extraction">
+
+**Syntax:** `string.substr(start, length)`
+
+**Purpose:** Extracts a specified number of characters from a string starting at a given position.
+
+**Example:**
+```javascript
+var str = "33315984";
+str.substr(2, 4);  // Returns "3159"
+```
+
+**Parameters:**
+- `start`: Starting index (0-based)
+- `length`: Number of characters to extract
+
+<Warning>
+**Deprecated:** This method is deprecated and may be removed from future JavaScript versions. Use `slice()` instead:
+
+```javascript
+// Old (deprecated)
+str.substr(2, 4);
+
+// Modern equivalent
+str.slice(2, 6);  // Note: second parameter is end index, not length
+```
+</Warning>
+
+</Accordion>
+
+<Accordion title="padStart() - Zero Padding">
+
+**Syntax:** `string.padStart(targetLength, padString)`
+
+**Purpose:** Pads the current string from the start with another string until it reaches the target length.
+
+**Usage in code:**
+```javascript
+xi.toString().padStart(d, '0')
+```
+
+**Example:**
+```javascript
+var xi = 159;
+var d = 4;
+xi.toString().padStart(4, '0');  // Returns "0159"
+```
+
+**Why it's needed:**
+Leading zeros are lost during `parseInt()`. For display purposes, we restore them to show the correct $d$-digit format.
+
+```javascript
+// Without padStart
+xi = 159 → displays as "159" (wrong for d=4)
+
+// With padStart
+xi = 159 → displays as "0159" (correct for d=4)
+```
+
+</Accordion>
+
+<Accordion title="toFixed() - Decimal Formatting">
+
+**Syntax:** `number.toFixed(digits)`
+
+**Purpose:** Formats a number to a fixed number of decimal places, returning a string.
+
+**Usage in code:**
+```javascript
+ri.toFixed(d)
+```
+
+**Example:**
+```javascript
+var ri = 0.3159;
+ri.toFixed(4);  // Returns "0.3159"
+
+var ri2 = 0.1;
+ri2.toFixed(4);  // Returns "0.1000"
+```
+
+**Why it's needed:**
+Ensures consistent decimal representation in the output table, padding with zeros if necessary.
+
+</Accordion>
+
+</AccordionGroup>
+
+#### HTML Table Generation
+
+The function builds an HTML table using string concatenation:
+
+```javascript
+var resultados = '<h3>Resultados de Cuadrados Medios</h3>';
+resultados += '<table>';
+resultados += '<thead><tr><th>yi</th><th>xi</th><th>ri</th></tr></thead>';
+resultados += '<tbody>';
+
+// For each iteration:
+resultados += '<tr><td>' + yi + '</td><td>' + 
+               xi.toString().padStart(d, '0') + '</td><td>' + 
+               ri.toFixed(d) + '</td></tr>';
+
+resultados += '</tbody></table>';
+resultadosDiv.innerHTML = resultados;
+```
+
+**Table structure:**
+
+| Column | Symbol | Description | Format |
+|--------|--------|-------------|--------|
+| yi | $y_i$ | Squared value | Integer, no padding |
+| xi | $x_i$ | Extracted middle digits | Zero-padded to $d$ digits |
+| ri | $r_i$ | Normalized random value | Fixed $d$ decimal places |
+
+<Warning>
+**Security Note:** Using `innerHTML` with concatenated strings is vulnerable to XSS attacks if user input is not sanitized. Since the values are parsed integers, the risk is mitigated, but best practice would use DOM methods or a sanitization library.
+</Warning>
+
+---
+
+### simularProductosMedios()
+
+Implements the Middle Product method for pseudorandom number generation using two seeds.
+
+<ParamField path="cantidadNumeros" type="number | string">
+  The number of pseudorandom values to generate.
+</ParamField>
+
+<ParamField path="semilla1" type="number">
+  The first initial seed value with `d` digits.
+</ParamField>
+
+<ParamField path="semilla2" type="number">
+  The second initial seed value with `d` digits.
+</ParamField>
+
+<ParamField path="d" type="number">
+  The number of digits to use for seeds and extracted values.
+</ParamField>
+
+<ResponseField name="Return Value" type="void">
+  Results are rendered directly into the DOM element with ID `tablaResultados`.
+</ResponseField>
+
+#### Function Signature
+
+```javascript
+function simularProductosMedios(cantidadNumeros, semilla1, semilla2, d)
+```
+
+#### Complete Implementation
+
+<CodeGroup>
+
+```javascript index.js (Lines 76-105)
+function simularProductosMedios(cantidadNumeros, semilla1, semilla2, d) {
+    var resultadosDiv = document.getElementById('tablaResultados');
+
+    var resultados = '<h3>Resultados de Productos Medios</h3>';
+    resultados += '<table>';
+    resultados += '<thead><tr><th>yi</th><th>xi</th><th>ri</th></tr></thead>';
+    resultados += '<tbody>';
+
+    var semillaActual1 = semilla1;
+    var semillaActual2 = semilla2;
+
+    for (var i = 0; i < cantidadNumeros; ++i) {
+        var yi = semillaActual1 * semillaActual2;
+        var yiStr = yi.toString();
+        var inicio = (yiStr.length - d) / 2;
+        var xi = parseInt(yiStr.substr(inicio, d));
+        var ri = xi / Math.pow(10, d);
+
+        resultados += '<tr><td>' + yi + '</td><td>' + xi.toString().padStart(d, '0') + '</td><td>' + ri.toFixed(d) + '</td></tr>';
+
+        semillaActual1 = semillaActual2;
+        semillaActual2 = xi;
+    }
+
+    resultados += '</tbody></table>';
+    resultadosDiv.innerHTML = resultados;
+}
+```
+
+```javascript State Update Pattern
+// At iteration i:
+yi = semillaActual1 * semillaActual2  // Multiply current pair
+xi = extractMiddle(yi)                 // Extract new value
+
+// Shift the state:
+semillaActual1 = semillaActual2       // Second seed becomes first
+semillaActual2 = xi                    // Extracted value becomes second
+
+// Next iteration uses the new pair
+```
+
+</CodeGroup>
+
+#### Algorithm Differences from Middle Square
+
+<AccordionGroup>
+
+<Accordion title="Two-Seed State Management">
+
+**State variables:**
+```javascript
+var semillaActual1 = semilla1;  // First seed
+var semillaActual2 = semilla2;  // Second seed
+```
+
+Unlike the Middle Square method (which uses one seed), the Middle Product method maintains a **pair of seeds**.
+
+**State transition:**
+```
+Iteration 0: [semilla1, semilla2] → multiply → extract xi₀
+Iteration 1: [semilla2, xi₀]      → multiply → extract xi₁
+Iteration 2: [xi₀, xi₁]           → multiply → extract xi₂
+...
+```
+
+This creates a **sliding window** of two values that continuously updates.
+
+</Accordion>
+
+<Accordion title="Multiplication Instead of Squaring">
+
+**Middle Square:**
+```javascript
+var yi = semillaActual * semillaActual;  // x² (same value twice)
+```
+
+**Middle Product:**
+```javascript
+var yi = semillaActual1 * semillaActual2;  // x₁ × x₂ (different values)
+```
+
+**Advantage:** Using two different values can help avoid some degenerative patterns that occur in the Middle Square method.
+
+</Accordion>
+
+<Accordion title="State Update Logic">
+
+```javascript
+semillaActual1 = semillaActual2;  // Shift: second → first
+semillaActual2 = xi;               // New value → second
+```
+
+This **shift register** pattern means:
+- The previous second seed becomes the new first seed
+- The newly extracted value becomes the new second seed
+- This creates a dependency chain through the sequence
+
+**Visualization:**
+```
+Before:  [A, B]    → product: A×B → extract: C
+After:   [B, C]    → product: B×C → extract: D
+Next:    [C, D]    → product: C×D → extract: E
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+#### Example Execution
+
+<CodeGroup>
+
+```javascript Example: d=4, semilla1=5772, semilla2=8149
+// Iteration 0:
+semillaActual1 = 5772
+semillaActual2 = 8149
+yi = 5772 × 8149 = 47,052,228
+yiStr = "47052228" (length 8)
+inicio = (8 - 4) / 2 = 2
+xi = parseInt("0522") = 522
+ri = 522 / 10000 = 0.0522
+// Display: yi=47052228, xi=0522, ri=0.0522
+
+// State update:
+semillaActual1 = 8149  // Was semillaActual2
+semillaActual2 = 522   // Newly extracted
+
+// Iteration 1:
+yi = 8149 × 522 = 4,253,778
+yiStr = "4253778" (length 7)
+inicio = (7 - 4) / 2 = 1.5 → 1 (integer division)
+xi = parseInt("2537") = 2537
+ri = 2537 / 10000 = 0.2537
+// Display: yi=4253778, xi=2537, ri=0.2537
+```
+
+```plaintext Output Table
+Resultados de Productos Medios
+
+┌───────────┬──────┬────────┐
+│ yi        │ xi   │ ri     │
+├───────────┼──────┼────────┤
+│ 47052228  │ 0522 │ 0.0522 │
+│ 4253778   │ 2537 │ 0.2537 │
+│ 1323714   │ 3237 │ 0.3237 │
+│ ...       │ ...  │ ...    │
+└───────────┴──────┴────────┘
+```
+
+</CodeGroup>
+
+## Computational Complexity
+
+### Time Complexity Analysis
+
+<AccordionGroup>
+
+<Accordion title="Per-Iteration Complexity">
+
+**Both algorithms:**
+
+| Operation | Complexity | Notes |
+|-----------|------------|-------|
+| Multiplication/Squaring | $O(1)$ | Fixed-precision integers |
+| `toString()` | $O(d)$ | Converts up to $2d$ digits |
+| String length calculation | $O(1)$ | Stored property |
+| Middle position calculation | $O(1)$ | Arithmetic operation |
+| `substr()` extraction | $O(d)$ | Copies $d$ characters |
+| `parseInt()` | $O(d)$ | Parses up to $d$ digits |
+| Division | $O(1)$ | Floating-point operation |
+| `padStart()` | $O(d)$ | May prepend up to $d$ characters |
+| `toFixed()` | $O(d)$ | Formats $d$ decimal places |
+| String concatenation | $O(L)$ | $L$ = current result length |
+
+**Per-iteration total:** $O(d)$ (dominated by string operations)
+
+</Accordion>
+
+<Accordion title="Total Complexity">
+
+**For $n$ iterations generating $n$ pseudorandom numbers:**
+
+$$
+T(n) = n \times O(d) + O(S)
+$$
+
+Where:
+- $n$ = number of iterations (`cantidadNumeros`)
+- $d$ = number of digits
+- $S$ = final string length for `innerHTML`
+
+Since $S \approx n \times k$ (where $k$ is average row length):
+
+$$
+T(n) = O(n \times d) + O(n) = O(n \times d)
+$$
+
+**Overall complexity: $O(n \times d)$**
+
+<Note>
+For practical values ($d \leq 8$, $n \leq 10,000$), the string concatenation for HTML generation may dominate. Using `array.join()` would be more efficient:
+
+```javascript
+var rows = [];
+for (var i = 0; i < cantidadNumeros; ++i) {
+    // ... calculations ...
+    rows.push('<tr><td>' + yi + '</td>...');
+}
+resultados += rows.join('');
+```
+</Note>
+
+</Accordion>
+
+<Accordion title="Space Complexity">
+
+**Memory usage:**
+
+| Component | Space | Notes |
+|-----------|-------|-------|
+| State variables | $O(1)$ | Fixed number of integers |
+| Loop variables | $O(1)$ | Counters and temporaries |
+| String buffer | $O(n \times k)$ | HTML table accumulation |
+| DOM rendering | $O(n \times k)$ | Browser's internal representation |
+
+**Total: $O(n)$**
+
+Where $k$ is the average row length (constant for fixed $d$).
+
+**Optimization opportunity:** Instead of accumulating all HTML in a string, could render incrementally or use DocumentFragment for better memory efficiency with very large $n$.
+
+</Accordion>
+
+</AccordionGroup>
+
+### Performance Considerations
+
+<Warning>
+**Bottlenecks for large-scale generation:**
+
+1. **String concatenation:** Repeated `+=` on strings creates intermediate copies. For $n > 1000$, use array accumulation.
+
+2. **DOM manipulation:** Setting `innerHTML` causes full reparse and reflow. For real-time updates, use incremental DOM methods.
+
+3. **Deprecated `substr()`:** Modern engines may not optimize deprecated methods. Migrate to `slice()`.
+
+4. **Synchronous execution:** Blocks the UI thread. For $n > 10,000$, consider:
+   - Web Workers for background computation
+   - `requestAnimationFrame()` for chunked processing
+   - Async iteration with `setTimeout()` batches
+
+</Warning>
+
+## Code Quality Notes
+
+<AccordionGroup>
+
+<Accordion title="Potential Issues">
+
+1. **No input validation:**
+   - Doesn't check if $d$ is positive
+   - Doesn't verify seeds are non-negative
+   - Doesn't validate that seeds have appropriate number of digits
+
+2. **Edge case handling:**
+   - Small squared/product values (fewer than $d$ digits) cause incorrect extraction
+   - Zero seeds cause degeneration but aren't caught
+   - Negative `inicio` values possible with very small products
+
+3. **Type inconsistency:**
+   - `cantidadNumeros` not parsed to integer (relies on type coercion)
+   - Mixed use of `var` instead of `let`/`const`
+
+4. **Deprecated method:**
+   - `substr()` should be replaced with `slice()`
+
+</Accordion>
+
+<Accordion title="Suggested Improvements">
+
+```javascript
+function simularCuadradosMedios(cantidadNumeros, semilla, d) {
+    // Input validation
+    const n = parseInt(cantidadNumeros);
+    if (isNaN(n) || n <= 0) throw new Error('Invalid cantidadNumeros');
+    if (d <= 0 || d > 8) throw new Error('d must be between 1 and 8');
+    if (semilla < 0 || semilla >= Math.pow(10, d)) {
+        throw new Error('Semilla must be a valid d-digit number');
+    }
+
+    const resultadosDiv = document.getElementById('tablaResultados');
+    const rows = [];  // Array accumulation instead of string concatenation
+    
+    let semillaActual = semilla;
+    
+    for (let i = 0; i < n; i++) {
+        const yi = semillaActual * semillaActual;
+        const yiStr = yi.toString();
+        
+        // Handle case where yi has fewer than d digits
+        const inicio = Math.max(0, Math.floor((yiStr.length - d) / 2));
+        const xiStr = yiStr.slice(inicio, inicio + d).padEnd(d, '0');
+        const xi = parseInt(xiStr);
+        const ri = xi / Math.pow(10, d);
+        
+        rows.push(`<tr><td>${yi}</td><td>${xiStr}</td><td>${ri.toFixed(d)}</td></tr>`);
+        
+        semillaActual = xi;
+        
+        // Detect degeneration
+        if (xi === 0) {
+            console.warn('Degenerate sequence detected at iteration', i);
+            break;
+        }
+    }
+    
+    resultadosDiv.innerHTML = `
+        <h3>Resultados de Cuadrados Medios</h3>
+        <table>
+            <thead><tr><th>yi</th><th>xi</th><th>ri</th></tr></thead>
+            <tbody>${rows.join('')}</tbody>
+        </table>
+    `;
+}
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+## Usage Examples
+
+### Example 1: Middle Square Method
+
+```javascript
+// Generate 10 numbers with 4-digit seed
+simularCuadradosMedios(10, 5772, 4);
+```
+
+**Expected output table:**
+
+| yi | xi | ri |
+|----|----|----|  
+| 33315984 | 3159 | 0.3159 |
+| 9979281 | 9792 | 0.9792 |
+| 95882264 | 8822 | 0.8822 |
+| 77827684 | 8276 | 0.8276 |
+| ... | ... | ... |
+
+### Example 2: Middle Product Method
+
+```javascript
+// Generate 10 numbers with two 4-digit seeds
+simularProductosMedios(10, 5772, 8149, 4);
+```
+
+**Expected output table:**
+
+| yi | xi | ri |
+|----|----|----|  
+| 47052228 | 0522 | 0.0522 |
+| 4253778 | 2537 | 0.2537 |
+| 1323714 | 3237 | 0.3237 |
+| ... | ... | ... |
+
+### Example 3: Degenerative Seed
+
+```javascript
+// This will quickly degenerate to zero
+simularCuadradosMedios(10, 1, 4);
+```
+
+**Output shows rapid degeneration:**
+
+| yi | xi | ri |
+|----|----|----|  
+| 1 | 0000 | 0.0000 |
+| 0 | 0000 | 0.0000 |
+| 0 | 0000 | 0.0000 |
+| ... | ... | ... |
+
+## See Also
+
+- [Mathematical Background](/reference/mathematical-background) - Theory and formulas
+- [Cuadrados Medios Algorithm](/algorithms/cuadrados-medios) - Middle Square Method details
+- [Productos Medios Algorithm](/algorithms/productos-medios) - Middle Product Method details
+- [Usage Parameters](/usage/parameters) - Seed selection and validation guidelines
