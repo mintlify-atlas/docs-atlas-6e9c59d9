@@ -1,0 +1,51 @@
+{
+  "projectType": "general",
+  "projectName": "Simulación de Algoritmos Pseudoaleatorios",
+  "projectDescription": "Educational web application demonstrating pseudorandom number generation algorithms including Middle Square and Middle Product methods",
+  "theme": "mint",
+  "primaryColor": "#007bff",
+  "lightColor": "#0056b3",
+  "darkColor": "#004085",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": ["introduction", "quickstart"]
+      },
+      {
+        "group": "Algorithms",
+        "pages": [
+          "algorithms/cuadrados-medios",
+          "algorithms/productos-medios"
+        ]
+      },
+      {
+        "group": "Usage Guide",
+        "pages": [
+          "usage/interface",
+          "usage/parameters",
+          "usage/interpreting-results"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/mathematical-background",
+          "reference/implementation"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Middle Square Method (Cuadrados Medios) pseudorandom number generation",
+    "Middle Product Method (Productos Medios) pseudorandom number generation",
+    "Interactive web-based interface for algorithm simulation",
+    "Real-time table generation displaying yi, xi, and ri values",
+    "Configurable seed values and digit precision (D parameter)"
+  ],
+  "publicApiSurface": [
+    "simularCuadradosMedios(cantidadNumeros, semilla, d)",
+    "simularProductosMedios(cantidadNumeros, semilla1, semilla2, d)",
+    "generarSimulacion()"
+  ]
+}
